@@ -16,19 +16,20 @@ struct student{
     char student[20];
     int ID;
 };
+struct mq_attr{
+    long mq_flags=0;
+    long mq_maxmsg=5;
+    long mq_msgsize = sizeof(student);
+    long mq_curmsg=0;
+}
 int main(){
-    struct mq_attr attributes{
-        long mq_flags=0;
-        long mq_maxmsg=5;
-        long mq_msgsize = sizeof(student);
-        long mq_curmsg=0;
-    }
+    struct mq_attr attributes;
     mqd_t queue = mq_open("/student_reg_queue",O_CREAT | O_RDWR,0,&attributes);
 if(fork()==0){ //This creates the frontend of the queue
     char names[2][10]; //initialize our Names to send to the queue
-    names[0]="Alice";
-    names[1]="Bob";
-    names[2]="Charlie"
+    strcpy(names[0],"Alice");
+    strcpy(names[1],"Bob");
+    strcpy(names[2],"Charlie");
     for(i=0;i<3;i++){
         student registree;
         strcpy(registree.student,names[i]);
@@ -41,9 +42,9 @@ if(fork()==0){ //This creates the frontend of the queue
 }else 
 if(fork()==0){
 for(int i=0;i<3;i++){
-    student registree;
+    struct student registree;
     int Number=1000;
-    mq_recieve(queue,(char *)&registree,sizeof(registree),1)
+    mq_receive(queue,(char *)&registree,sizeof(registree),1)
     printf("[Database] @ Ys: Start processing %s...",student);
     sleep(3)
     printf("[Database] @ Zs: Finished processing %s. Assigned ID: %d",registree.student,registree.id);
@@ -54,9 +55,9 @@ for(int i=0;i<3;i++){
 }
 }else
 if(fork()==0){
-student registree;
+struct student registree;
 for(int i=0;i<3;i++){
-mq_recieve(queue,(char *)&registree,sizeof(registree),2) //take in priority 2 message from the DB
+mq_receive(queue,(char *)&registree,sizeof(registree),2) //take in priority 2 message from the DB
 printf("[Logger] @ As:CONFIRMED - ID: %d, Name: %s",registree.ID,registree.student); //Print confirmation
 }
 }else{
