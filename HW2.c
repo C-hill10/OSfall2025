@@ -52,20 +52,20 @@ if(fork()==0){ //This creates the frontend of the queue
     printf("Frontend] @ Xs: All students submitted! My job is done.\n"); //all names have been sent
 }else{ 
 if(fork()==0){ //Database
-    int Number=1000;
+    int Number=1000; //test id that gets incremented, it could've also easily started at a random number and incremented from there
 for(int i=0;i<3;i++){
     struct student registree;
     int priority;
     if(mq_receive(queue,(char *)(&registree),(sizeof(registree)),&priority) == -1){
-        perror("mq_receive");
+        perror("mq_receive"); //error checking on receive
     }
     printf("[Database] @ Ys: Start processing %s...\n",registree.student);
-    sleep(3);
+    sleep(3); //slow database work simulation
     registree.ID=Number;
     printf("[Database] @ Zs: Finished processing %s. Assigned ID: %d\n",registree.student,registree.ID);
-    Number++;
-    registree.msg_type=2;
-    if( mq_send(logQueue,(char *)(&registree),(sizeof(registree)),registree.msg_type) == -1){
+    Number++; //Increment ID for next stduent
+    registree.msg_type=2; //set priority 2 for the logger
+    if( mq_send(logQueue,(char *)(&registree),(sizeof(registree)),registree.msg_type) == -1){ //send to the log queue
         perror("mq_send");
        }
 }
@@ -75,19 +75,19 @@ if(fork()==0){ //Logger
  int priority;
  for(int i=0;i<3;i++){
     mq_receive(logQueue,(char *)&log,sizeof(log),&priority);
-    while(priority!=2){
-        mq_send(logQueue,(char *)(&log),(sizeof(log)),priority);
-        mq_receive(logQueue,(char *)&log,sizeof(log),&priority); //take in priority 2 message from the DB
+    while(priority!=2){ //i tried instituting this same code without a separate log queue, but it didn't work for some reason
+        mq_send(logQueue,(char *)(&log),(sizeof(log)),priority); //if receieved message wasn't prio 2, resend it
+        mq_receive(logQueue,(char *)&log,sizeof(log),&priority); 
     }
  printf("[Logger] @ As:CONFIRMED - ID: %d, Name: %s\n",log.ID,log.student); //Print confirmation
  }
 }else{
-while(wait(NULL)>0);
+while(wait(NULL)>0); //wait for all children to be done
 if(mq_close(queue) ==-1){
-    perror("mq_close");
+    perror("mq_close"); //error checking value of close
 }
 if(mq_unlink("/student_reg_queue")==-1){ //destroy the queue after all child processes have stopped
-    perror("mq_unlink");
+    perror("mq_unlink"); //error checking value of unlink
 }
 }
 }
