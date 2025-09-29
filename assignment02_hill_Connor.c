@@ -23,7 +23,7 @@ int main(){
         long mq_msgsize = sizeof(student);
         long mq_curmsg=0;
     }
-    mqd_t queue = mq_open("/student_reg_queue",O_CREAT | O_WRONLY,0,&attributes);
+    mqd_t queue = mq_open("/student_reg_queue",O_CREAT | O_RDWR,0,&attributes);
 if(fork()==0){ //This creates the frontend of the queue
     char names[2][10]; //initialize our Names to send to the queue
     names[0]="Alice";
