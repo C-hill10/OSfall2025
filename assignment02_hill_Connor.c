@@ -9,34 +9,31 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <mqueue.h>
-
+#include <string.h>
 
 struct student{
-    long msg_type;
+    unsigned long msg_type;
     char student[20];
     int ID;
 };
-struct mq_attr{
-    long mq_flags=0;
-    long mq_maxmsg=5;
-    long mq_msgsize = sizeof(student);
-    long mq_curmsg=0;
-}
+
 int main(){
+    struct student Student;
     struct mq_attr attributes;
+    attributes.mq_flags=0;
+    attributes.mq_maxmsg=5;
+    attributes.mq_msgsize= sizeof(Student);
+    attributes.mq_curmsgs=0;
     mqd_t queue = mq_open("/student_reg_queue",O_CREAT | O_RDWR,0,&attributes);
 if(fork()==0){ //This creates the frontend of the queue
-    char names[2][10]; //initialize our Names to send to the queue
-    strcpy(names[0],"Alice");
-    strcpy(names[1],"Bob");
-    strcpy(names[2],"Charlie");
-    for(i=0;i<3;i++){
-        student registree;
+    char names[3][10]={"Alice","Bob","Charlie"}; //initialize our Names to send to the queue
+    for(int i=0;i<3;i++){
+        struct student registree;
         strcpy(registree.student,names[i]);
-        registree.msg_type=1;
-        mq_send(queue,(char *)&registree,sizeof(registree),1);
+        registree.msg_type=0;
+        mq_send(queue,(char *)&registree,sizeof(registree),registree.msg_type);
         printf("Frontend] @ Xs: Sending %s...",registree.student);
-        sleep(1)
+        sleep(1);
     }
     printf("Frontend] @ Xs: All students submitted! My job is done."); //all names have been sent
 }else 
@@ -44,20 +41,20 @@ if(fork()==0){
 for(int i=0;i<3;i++){
     struct student registree;
     int Number=1000;
-    mq_receive(queue,(char *)&registree,sizeof(registree),1)
-    printf("[Database] @ Ys: Start processing %s...",student);
-    sleep(3)
-    printf("[Database] @ Zs: Finished processing %s. Assigned ID: %d",registree.student,registree.id);
+    mq_receive(queue,(char *)&registree,sizeof(registree),(int *)registree.msg_type);
+    printf("[Database] @ Ys: Start processing %s...",registree.student);
+    sleep(3);
+    printf("[Database] @ Zs: Finished processing %s. Assigned ID: %d",registree.student,registree.ID);
     registree.ID=Number;
     Number++;
-    registree.msg_type=2;
-    mq_send(queue,(char *)&registree,sizeof(registree),2);
+    registree.msg_type=1;
+    mq_send(queue,(char *)&registree,sizeof(registree),registree.msg_type);
 }
 }else
 if(fork()==0){
 struct student registree;
 for(int i=0;i<3;i++){
-mq_receive(queue,(char *)&registree,sizeof(registree),2) //take in priority 2 message from the DB
+mq_receive(queue,(char *)&registree,sizeof(registree),(int *)registree.msg_type); //take in priority 2 message from the DB
 printf("[Logger] @ As:CONFIRMED - ID: %d, Name: %s",registree.ID,registree.student); //Print confirmation
 }
 }else{
@@ -65,5 +62,5 @@ wait(NULL);
 mq_close(queue);
 mq_unlink("/student_reg_queue"); //destroy the queue after all child processes have stopped
 }
-return 0
+return 0;
 }
