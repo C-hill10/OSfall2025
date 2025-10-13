@@ -1,46 +1,51 @@
 #include <pthread.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
-int global_var = 0;
-static int static_var = 0;
-void* thread_function(void* arg) {
-int local_var = 0;
-int* dynamic_var = (int*)calloc(sizeof(int), 1);
-local_var++;
-(*dynamic_var)++;
-global_var++;
-static_var++;
-free(dynamic_var);
-pid_t pid;
-int i;
-for (i = 0; i < 3; i++) {
-pid = fork();
-if (pid == 0) {
-local_var++;
-(*dynamic_var)++;
-global_var++;
-static_var++;
-exit(0);
-} else if (pid < 0) {
-fprintf(stderr, "Fork failed\n");
-return NULL;
+
+void *thread_function1(void *arg) {
+printf("Thread 1 created\n");
+/* Thread does something meaningful task..*/
+char *argv[] = {"ls", "-l", NULL};
+execvp("ls", argv);
+perror("execvp");
+printf("Thread 1 is done\n");
 }
-}
-for (i = 0; i < 3; i++) {
-wait(NULL);
-}
+
+void *thread_function2(void *arg) {
+printf("Thread 2 created\n");
+/* Thread does something meaningful task..*/
+printf("Thread 2 is done\n");
 pthread_exit(NULL);
 }
+
 int main() {
-pthread_t threads[3];
-int i;
-for (i = 0; i < 3; i++) {
-pthread_create(&threads[i], NULL, thread_function, NULL);
+pid_t pid;
+pthread_t thread_id;
+printf("Main process started\n");
+if (pthread_create(&thread_id, NULL, thread_function1, NULL) != 0){
+perror("pthread_create");
+exit(EXIT_FAILURE);
 }
-for (i = 0; i < 3; i++) {
-pthread_join(threads[i], NULL);
+if (pthread_create(&thread_id, NULL, thread_function2, NULL) != 0){
+perror("pthread_create");
+exit(EXIT_FAILURE);
 }
+pid = fork();
+if (pid == -1) {
+perror("fork");
+exit(EXIT_FAILURE);
+} else if (pid == 0) {
+printf("Child process executing\n");
+} else {
+printf("Parent process continuing\n");
+}
+if (pthread_join(thread_id, NULL) != 0) {
+perror("pthread_join");
+exit(EXIT_FAILURE);
+}
+printf("Main process is done\n");
 return 0;
 }
