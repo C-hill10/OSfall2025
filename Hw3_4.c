@@ -7,9 +7,10 @@
 #define NUM_THREADS 5
 int global_var = 0;
 static int static_var = 0;
-void *thread_func(void *arg) {
+void *thread_func(void* x) {
+int* dynamic_var = (int*)malloc(sizeof(int));
+int local_var=*(int*)x;
 for (int i = 0; i < 100000; ++i) {
-int *dynamic_var =(int*)malloc(sizeof(int));
 // Increment local variable
 local_var++; // this is passed from the main function
 // Increment global variable
@@ -31,12 +32,12 @@ int local_var = 42;
 for (int i = 0; i < NUM_THREADS; ++i) {
 /* Create a thread and pass the variable "local_var" to it. */
 /* Make sure to check if the thread creation is successful or not. */
-if(pthread_create(&threads[j], NULL, thread_function,&local_var)!=0){
+if(pthread_create(&threads[i], NULL, thread_func,&local_var)!=0){
     perror("pthread_create");
     exit(EXIT_FAILURE);
 }
 }
-for (int i = 0; i < NUM_THREADS; ++i) {
+for (int j = 0; j < NUM_THREADS; ++j) {
 /* Create a thread and pass the variable "local_var" to it. */
 /* Make sure to check if the thread creation is successful or not. */
 if(pthread_join(threads[j], NULL)!=0){
