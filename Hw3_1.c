@@ -16,7 +16,7 @@ local_var++;
 global_var++;
 static_var++;
 free(dynamic_var);
-printf("printing from a thread. dynamic_var=%d. global var=%d , Static var=%d \n",*dynamic_var,global_var,static_var);
+printf("printing from a thread. dynamic_var=%d. global var=%d , Static var=%d , Local var=%d \n",*dynamic_var,global_var,static_var,local_var);
 pthread_exit(NULL);
 }
 
@@ -39,6 +39,8 @@ exit(0);
 } else if (pid < 0) {
 fprintf(stderr, "Fork failed\n");
 return 1;
+} else{
+    sleep(1);
 }
 }
 for (i = 0; i < 3; i++) {
