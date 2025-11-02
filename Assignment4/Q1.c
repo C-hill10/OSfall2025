@@ -5,10 +5,15 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-
-
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static int shelf[8];
 void *producer(void *param) {
-
+for(int i=0;i<50,i++){
+int item=rand()%50;
+pthread_mutex_lock(&mutex);
+// critical section
+pthread_mutex_unlock(&mutex);
+}
 pthread_exit(0);
 }
 void *consumer(void *param) {
