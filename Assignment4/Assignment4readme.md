@@ -1,0 +1,2 @@
+all programs ran with gcc (file name) and then ./a.out
+The information for deadlocks with monitors are shown in the PDF file, I have included screenshots showing the monitor working with the deadlocked and non deadlocked verions.
