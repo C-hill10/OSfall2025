@@ -10,7 +10,8 @@ int inleft=0;
 int inright=4;
 int outleft=0;
 int outright=4;
-int counterleft,counterright=0;
+int counterleft=0;
+int counterright=0;
 pthread_cond_t not_full = PTHREAD_COND_INITIALIZER;; //number of empty buffer spaces 
 pthread_cond_t not_empty= PTHREAD_COND_INITIALIZER;; // items available to consume
 static pthread_mutex_t left_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -21,15 +22,13 @@ void *producerleft(void *param) {
 for(int i=0;i<50;i++){
 int item=rand()%50;
 pthread_mutex_lock(&left_mutex);
-printf("producer left has claimed left mutex");
 pthread_mutex_lock(&right_mutex);
-printf("producer left has claimed right mutex");
 // critical section
 while(counterleft==4){
 pthread_mutex_unlock(&right_mutex);
 pthread_cond_wait(&not_full,&left_mutex);
-}
 pthread_mutex_lock(&right_mutex);
+}
 shelf[inleft]=item;
 inleft=(inleft+1)%4;
 counterleft++;
@@ -45,15 +44,13 @@ void *producerright(void *param) {
 for(int i=0;i<50;i++){
 int item=rand()%50;
 pthread_mutex_lock(&left_mutex);
-printf("producer right has claimed left mutex");
 pthread_mutex_lock(&right_mutex);
-printf("producer right has claimed left mutex");
 // critical section
 while(counterright==4){
     pthread_mutex_unlock(&right_mutex);
 pthread_cond_wait(&not_full,&left_mutex);
-}
 pthread_mutex_lock(&right_mutex);
+}
 shelf[inright]=item;
 inright=((inright+1)%4)+4;
 counterright++;
@@ -71,16 +68,14 @@ int id= *((int *)param);
 for(int i=0;i<50;i++){
 int item;
 pthread_mutex_lock(&left_mutex);
-printf("consumer %d has claimed left mutex",id);
 pthread_mutex_lock(&right_mutex);
-printf("consumer %d has claimed right mutex",id);
 // critical section
 //if neither shelf has anything, wait
 while((counterright == 0 && counterleft == 0)){
 pthread_mutex_unlock(&right_mutex); 
-pthread_cond_wait(&not_full,&left_mutex);
-} 
+pthread_cond_wait(&not_empty,&left_mutex);
 pthread_mutex_lock(&right_mutex);
+} 
 if(rand()%2){ // if 1 check right shelf first
 if (counterright!=0)
 {
@@ -129,7 +124,6 @@ if(pthread_create(&producer1,NULL,producerright,NULL)!=0){
 if(pthread_create(&consumer1,NULL,consumer,(void *)&id)!=0){
   perror("pthread_create");
 }
-id++;
 if(pthread_create(&producer2,NULL,producerleft,NULL)!=0){
   perror("pthread_create");
 }
